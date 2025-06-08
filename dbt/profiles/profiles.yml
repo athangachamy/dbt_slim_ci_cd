@@ -1,4 +1,4 @@
-PROFILE_PRODUCTION:
+CI_CD_DEMO_PROFILE:
   target: production
   send_anonymous_usage_stats: False
   outputs:
@@ -23,3 +23,14 @@ PROFILE_PRODUCTION:
       type: snowflake
       user: athangachamy
       warehouse: compute_wh
+    ci:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: ci_role
+      warehouse: ci_wh
+      database: ci
+      threads: 8
+      client_session_keep_alive: False
+      reuse_connections: True

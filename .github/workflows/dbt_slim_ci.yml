@@ -1,0 +1,65 @@
+name: dbt - Slim CI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  slim-ci:
+    runs-on: ubuntu-latest
+
+    env:
+      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+      SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+      SNOWFLAKE_CI_SCHEMA: pr_${{ github.event.pull_request.number }}__${{ github.sha }}
+      DBT_VERSION: 1.9.0
+      DBT_SNOWFLAKE_VERSION: 1.9.4
+      DBT_PROFILES_DIR: profiles/
+      DBT_TARGET: ci
+      DBT_ARTIFACT_DIR: target-deferred
+      # SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      # SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
+    defaults:
+      run:
+        working-directory: dbt/
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install Requirements
+        run: |
+          pip install dbt-core==${DBT_VERSION} dbt-snowflake==${DBT_SNOWFLAKE_VERSION}
+
+
+      - name: Set up dbt
+        run: |
+          dbt deps
+
+      - name: Test dbt connection
+        run: |
+          dbt debug --profiles-dir profiles
+
+      - name: List modified models
+        run: |
+          echo "Listing modified models..."
+          dbt list --select state:modified+ --state ${DBT_ARTIFACT_DIR}
+
+      - name: Build modified models
+        run: |
+          dbt build --select state:modified+ --state ${DBT_ARTIFACT_DIR}
+
+      - name: Data Tests Coverage
+        run: |
+          dbt run-operation required_tests
+
+      - name: Docs Coverage
+        run: |
+          dbt run-operation required_docs
