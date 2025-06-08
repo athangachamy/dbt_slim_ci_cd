@@ -1,0 +1,25 @@
+PROFILE_PRODUCTION:
+  target: production
+  send_anonymous_usage_stats: False
+  outputs:
+    production:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_PROD_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_PROD_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PROD_PASSWORD') }}"
+      database: PRODUCTION
+      warehouse: ICEBERG_WH
+      schema: MARTS
+      role: accountadmin
+      threads: 1
+      client_session_keep_alive: false
+    dev:
+      account: "{{ env_var('SNOWFLAKE_CI_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_CI_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_CI_PASSWORD') }}"
+      role: accountadmin
+      schema: MARTS
+      threads: 4
+      type: snowflake
+      user: athangachamy
+      warehouse: compute_wh
