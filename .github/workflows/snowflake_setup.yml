@@ -29,5 +29,5 @@ jobs:
           SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
           SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
         run: |
-          python ingestion/execute_snowflake_qry.py
+          python snowflake_init_setup/execute_snowflake_qry.py
           echo "Snowflake setup complete"

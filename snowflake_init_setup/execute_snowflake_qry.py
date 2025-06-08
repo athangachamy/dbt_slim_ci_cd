@@ -27,7 +27,7 @@ def execute_sql_file(file_path):
                 print(f"Executing query: {query.strip().format(user_name=user)}")
                 cursor.execute(query.strip().format(user_name=user))  # Execute each query
 
-sql_file_path = "./ingestion/initial_snowflake_setup.sql"
+sql_file_path = "./snowflake_init_setup/initial_snowflake_setup.sql"
 execute_sql_file(sql_file_path)
 
 cursor.close()

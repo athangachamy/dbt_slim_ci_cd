@@ -1,34 +1,41 @@
-import os
-import snowflake.connector
+create database if not exists prod;
 
-user = os.getenv("SNOWFLAKE_USER")
-password = os.getenv("SNOWFLAKE_PASSWORD")
-account = os.getenv("SNOWFLAKE_ACCOUNT")
-warehouse = os.getenv("SNOWFLAKE_WAREHOUSE")
-# database = os.getenv("SNOWFLAKE_DATABASE")
-# schema = os.getenv("SNOWFLAKE_SCHEMA")
+use database prod;
 
-conn = snowflake.connector.connect(
-    user=user,
-    password=password,
-    account=account,
-    warehouse=warehouse,
-    # database=database,
-    # schema=schema
-)
+create schema  if not exists marts;
 
-cursor = conn.cursor()
+create schema  if not exists tpch1;
 
-def execute_sql_file(file_path):
-    with open(file_path, 'r') as file:
-        queries = file.read().split(';')  # Split queries by semicolon
-        for query in queries:
-            if query.strip():
-                print(f"Executing query: {query.strip().format(user_name=user)}")
-                cursor.execute(query.strip().format(user_name=user))  # Execute each query
+create database if not exists dev;
 
-sql_file_path = "./ingestion/initial_snowflake_setup.sql"
-execute_sql_file(sql_file_path)
+use database dev;
 
-cursor.close()
-conn.close()
+create schema  if not exists marts;
+
+use database prod;
+
+use schema tpch1;
+
+CREATE TABLE IF NOT EXISTS  CUSTOMER
+AS SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.CUSTOMER ;
+
+CREATE TABLE IF NOT EXISTS  LINEITEM
+AS SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM ;
+
+CREATE TABLE IF NOT EXISTS  NATION
+AS SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.NATION ;
+
+CREATE TABLE IF NOT EXISTS  ORDERS
+AS SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS ;
+
+CREATE TABLE IF NOT EXISTS  PART
+AS SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.PART ;
+
+CREATE TABLE IF NOT EXISTS  PARTSUPP
+AS SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.PARTSUPP ;
+
+CREATE TABLE IF NOT EXISTS REGION
+AS SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.REGION ;
+
+CREATE TABLE IF NOT EXISTS  SUPPLIER
+AS SELECT * FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.SUPPLIER ;
