@@ -18,8 +18,7 @@ jobs:
       DBT_PROFILES_DIR: profiles/
       DBT_TARGET: ci
       DBT_ARTIFACT_DIR: target-deferred
-      # SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      # SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
 
     defaults:
       run:
@@ -38,28 +37,47 @@ jobs:
         run: |
           pip install dbt-core==${DBT_VERSION} dbt-snowflake==${DBT_SNOWFLAKE_VERSION}
 
-
-      - name: Set up dbt
+      - name: Install AWS CLI
         run: |
-          dbt deps
+          sudo apt-get update
+          sudo apt-get install -y awscli
+          
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Test dbt connection
-        run: |
-          dbt debug --profiles-dir profiles
 
-      - name: List modified models
+      - name: Download datasets from S3
         run: |
-          echo "Listing modified models..."
-          dbt list --select state:modified+ --state ${DBT_ARTIFACT_DIR}
+            S3_BUCKET="dbtslimcicdartifact"
+            #S3_PREFIX="path/to/files/${{ github.event.inputs.version }}/"
 
-      - name: Build modified models
-        run: |
-          dbt build --select state:modified+ --state ${DBT_ARTIFACT_DIR}
+            # Create target directory if it doesn't exist
+            #mkdir -p ${TARGET_DIR}
 
-      - name: Data Tests Coverage
-        run: |
-          dbt run-operation required_tests
+            #aws s3 ls "s3://${S3_BUCKET}/${DATASET_FILE_NAME}${i}.zip" ${TARGET_DIR}/
+            aws s3 cp "s3://${S3_BUCKET}"/manifest.json ./ || echo "Manifest not found"
 
-      - name: Docs Coverage
+      - name: Get Schema ID
+        id: schema_id
+        run: echo "SCHEMA_ID=${{ github.event.pull_request.number }}__${{ github.sha }}" >> $GITHUB_ENV
+
+      - name: Run dbt debug
         run: |
-          dbt run-operation required_docs
+          dbt debug --profiles-dir profiles --target pr --vars "schema_id: $SCHEMA_ID"
+
+
+      - name: Run dbt deps
+        run: |
+          dbt deps --profiles-dir profiles  --target pr  --vars "schema_id: $SCHEMA_ID"
+
+      - name: Run dbt build
+        run: |
+          if [ -f "./manifest.json" ]; then
+            dbt build -s 'state:modified+' --profiles-dir profiles  --defer --state ./ --target pr --vars "schema_id: $SCHEMA_ID"
+          else
+            dbt build --target pr --vars "schema_id: $SCHEMA_ID"
+          fi
