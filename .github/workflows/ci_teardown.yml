@@ -15,6 +15,8 @@ jobs:
       SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
       SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
       SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+      DBT_VERSION: 1.9.0
+      DBT_SNOWFLAKE_VERSION: 1.9.4
     
     defaults:
       run:
@@ -36,7 +38,11 @@ jobs:
     - name: Get Schema ID
       id: schema_id
       run: echo "SCHEMA_ID=${{ github.event.pull_request.number }}__${{ github.sha }}" >> $GITHUB_ENV
-      
+    
+    - name: Install Requirements
+      run: |
+          pip install dbt-core==${DBT_VERSION} dbt-snowflake==${DBT_SNOWFLAKE_VERSION}
+
     - name: dbt deps
       run: dbt deps
 
