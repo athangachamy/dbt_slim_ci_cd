@@ -1,7 +1,10 @@
 name: dbt - Slim CI
 
 on:
-  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+
 
 jobs:
   slim-ci:

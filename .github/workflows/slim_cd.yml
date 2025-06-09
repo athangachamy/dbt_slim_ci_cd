@@ -1,7 +1,10 @@
 ---
 name: dbt - Slim CD
 on:
-  workflow_dispatch: null
+  push:
+    branches:
+      - main
+
 jobs:
   slim-cd:
     runs-on: ubuntu-latest

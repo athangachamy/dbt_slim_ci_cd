@@ -1,0 +1,43 @@
+name: CI schema teardown on PR close
+
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  CI_TEARDOWN_job:
+    runs-on: ubuntu-latest
+    
+    env:
+      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+      SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+    
+    defaults:
+      run:
+        working-directory: dbt/
+    
+    steps:
+    - name: checkout
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.12'
+
+    - name: Get PR NUM
+      id: pr_number
+      run: echo "PR_NUM=${{ github.event.number }}" >> $GITHUB_ENV
+
+    - name: Get Schema ID
+      id: schema_id
+      run: echo "SCHEMA_ID=${{ github.event.pull_request.number }}__${{ github.sha }}" >> $GITHUB_ENV
+      
+    - name: dbt deps
+      run: dbt deps
+
+    - name: drop PR schemas
+      run: dbt run-operation drop_pr_staging_schemas --args "{'PR_number'":" '${SCHEMA_ID}' }" --profiles-dir profiles --target pr --vars "'schema_id'":" '$SCHEMA_ID'"
