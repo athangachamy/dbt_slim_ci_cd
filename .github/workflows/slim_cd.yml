@@ -1,12 +1,10 @@
-name: dbt - Slim CI
-
+---
+name: dbt - Slim CD
 on:
-  workflow_dispatch:
-
+  workflow_dispatch: null
 jobs:
-  slim-ci:
+  slim-cd:
     runs-on: ubuntu-latest
-
     env:
       SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
       SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
@@ -16,62 +14,57 @@ jobs:
       DBT_VERSION: 1.9.0
       DBT_SNOWFLAKE_VERSION: 1.9.4
       DBT_PROFILES_DIR: profiles/
-      DBT_TARGET: ci
       DBT_ARTIFACT_DIR: target-deferred
       S3_BUCKET: dbtslimcicdartifact
-
-
     defaults:
       run:
         working-directory: dbt/
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
+      
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v3
         with:
-          python-version: '3.12'
-
-      - name: Install Requirements
+          python-version: "3.12"
+      
+      - name: Install dependencies
         run: |
           pip install dbt-core==${DBT_VERSION} dbt-snowflake==${DBT_SNOWFLAKE_VERSION}
-
+      
       - name: Install AWS CLI
         run: |
           sudo apt-get update
           sudo apt-get install -y awscli
-          
+      
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-
-
+      
       - name: Download datasets from S3
-        run: |
+        run: |          
             aws s3 cp "s3://${S3_BUCKET}"/manifest.json ./ || echo "Manifest not found"
-
-      - name: Get Schema ID
-        id: schema_id
-        run: echo "SCHEMA_ID=${{ github.event.pull_request.number }}__${{ github.sha }}" >> $GITHUB_ENV
-
+      
       - name: Run dbt debug
-        run: |
-          dbt debug --profiles-dir profiles --target pr --vars "schema_id: $SCHEMA_ID"
-
+        run: dbt debug --target prod --profiles-dir profiles 
 
       - name: Run dbt deps
-        run: |
-          dbt deps --profiles-dir profiles  --target pr  --vars "schema_id: $SCHEMA_ID"
-
+        run: dbt deps --target prod --profiles-dir profiles 
+      
       - name: Run dbt build
         run: |
           if [ -f "./manifest.json" ]; then
-            dbt build -s 'state:modified+' --profiles-dir profiles  --defer --state ./ --target pr --vars "schema_id: $SCHEMA_ID"
+            dbt build -s 'state:modified+' --state ./ --target prod --profiles-dir profiles 
           else
-            dbt build --target pr --vars "schema_id: $SCHEMA_ID"
+            dbt build --target prod --profiles-dir profiles 
           fi
+      - name: Copy new manifest.json to AWS S3 
+        run: |
+          aws s3 cp ./target/manifest.json "s3://${S3_BUCKET}"/manifest.json
+          
+
+
+

@@ -2,13 +2,13 @@ CI_CD_DEMO_PROFILE:
   target: production
   send_anonymous_usage_stats: False
   outputs:
-    production:
+    prod:
       type: snowflake
-      account: "{{ env_var('SNOWFLAKE_PROD_ACCOUNT') }}"
-      user: "{{ env_var('SNOWFLAKE_PROD_USER') }}"
-      password: "{{ env_var('SNOWFLAKE_PROD_PASSWORD') }}"
-      database: PRODUCTION
-      warehouse: ICEBERG_WH
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      database: PROD
+      warehouse: prod_wh
       schema: MARTS
       role: accountadmin
       threads: 1
