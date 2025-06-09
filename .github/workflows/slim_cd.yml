@@ -1,11 +1,9 @@
 ---
 name: dbt - Slim CD
-
 on:
   push:
     branches:
       - main
-
 
 jobs:
   slim-cd:
