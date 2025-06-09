@@ -14,10 +14,11 @@ CI_CD_DEMO_PROFILE:
       threads: 1
       client_session_keep_alive: false
     dev:
-      account: "{{ env_var('SNOWFLAKE_CI_ACCOUNT') }}"
-      user: "{{ env_var('SNOWFLAKE_CI_USER') }}"
-      password: "{{ env_var('SNOWFLAKE_CI_PASSWORD') }}"
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
       role: accountadmin
+      database: DEV
       schema: MARTS
       threads: 4
       type: snowflake
