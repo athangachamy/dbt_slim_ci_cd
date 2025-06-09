@@ -1,0 +1,77 @@
+name: dbt - Slim CI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  slim-ci:
+    runs-on: ubuntu-latest
+
+    env:
+      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+      SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+      SNOWFLAKE_CI_SCHEMA: pr_${{ github.event.pull_request.number }}__${{ github.sha }}
+      DBT_VERSION: 1.9.0
+      DBT_SNOWFLAKE_VERSION: 1.9.4
+      DBT_PROFILES_DIR: profiles/
+      DBT_TARGET: ci
+      DBT_ARTIFACT_DIR: target-deferred
+      S3_BUCKET: dbtslimcicdartifact
+
+
+    defaults:
+      run:
+        working-directory: dbt/
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install Requirements
+        run: |
+          pip install dbt-core==${DBT_VERSION} dbt-snowflake==${DBT_SNOWFLAKE_VERSION}
+
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
+          
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+
+      - name: Download datasets from S3
+        run: |
+            aws s3 cp "s3://${S3_BUCKET}"/manifest.json ./ || echo "Manifest not found"
+
+      - name: Get Schema ID
+        id: schema_id
+        run: echo "SCHEMA_ID=${{ github.event.pull_request.number }}__${{ github.sha }}" >> $GITHUB_ENV
+
+      - name: Run dbt debug
+        run: |
+          dbt debug --profiles-dir profiles --target pr --vars "schema_id: $SCHEMA_ID"
+
+
+      - name: Run dbt deps
+        run: |
+          dbt deps --profiles-dir profiles  --target pr  --vars "schema_id: $SCHEMA_ID"
+
+      - name: Run dbt build
+        run: |
+          if [ -f "./manifest.json" ]; then
+            dbt build -s 'state:modified+' --profiles-dir profiles  --defer --state ./ --target pr --vars "schema_id: $SCHEMA_ID"
+          else
+            dbt build --target pr --vars "schema_id: $SCHEMA_ID"
+          fi

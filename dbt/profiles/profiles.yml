@@ -1,0 +1,38 @@
+CI_CD_DEMO_PROFILE:
+  target: production
+  send_anonymous_usage_stats: False
+  outputs:
+    prod:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      database: PROD
+      warehouse: prod_wh
+      schema: MARTS
+      role: accountadmin
+      threads: 1
+      client_session_keep_alive: false
+    dev:
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: accountadmin
+      database: DEV
+      schema: MARTS
+      threads: 4
+      type: snowflake
+      user: athangachamy
+      warehouse: compute_wh
+    pr:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: ci_role
+      warehouse: ci_wh
+      database: ci
+      schema: "pr_{{ var('schema_id') }}"
+      threads: 8
+      client_session_keep_alive: False
+      reuse_connections: True
