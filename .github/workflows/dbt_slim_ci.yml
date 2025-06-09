@@ -76,8 +76,15 @@ jobs:
 
       - name: Run dbt build
         run: |
+          echo "Timestamp for the local Manifest.json"
+          ls -lrth target
+          echo "Timestamp for the S3 Manifest.json"
+          ls -lrth ./
           if [ -f "./manifest.json" ]; then
-            dbt build -s 'state:modified+' --profiles-dir profiles  --defer --state ./ --target pr --vars "schema_id: $SCHEMA_ID"
+            echo "Inside the IF clause"
+
+            dbt list -s 'state:modified+' --profiles-dir profiles  --defer --state ./ --target pr --vars "schema_id: $SCHEMA_ID"
           else
             dbt build --target pr --vars "schema_id: $SCHEMA_ID"
+            echo "Inside the ELSE clause"
           fi
