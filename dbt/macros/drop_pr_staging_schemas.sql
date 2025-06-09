@@ -5,7 +5,7 @@
             select schema_name
             from ci.INFORMATION_SCHEMA.SCHEMATA
             where
-            schema_name like 'PR_'||{{ PR_number }}||'%'
+            schema_name like 'PR_{{ PR_number }}%'
         )
 
         select 
