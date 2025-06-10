@@ -19,7 +19,7 @@ final as (
         type,
         size,
         container as containers,
-        retail_price as pricess
+        retail_price as retail_pricess
     from
         part
 )
