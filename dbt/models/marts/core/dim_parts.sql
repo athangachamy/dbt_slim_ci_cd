@@ -18,7 +18,7 @@ final as (
         brand,
         type,
         size,
-        container,
+        container as containers,
         retail_price as pricess
     from
         part
